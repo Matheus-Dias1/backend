@@ -1,6 +1,5 @@
 import express = require("express");
 import mongoose from "mongoose";
-import slugify from "slugify";
 import { Product } from "../models/product";
 import { decodeCursor, encodeCursor, PageInfo } from "../utils/pagination";
 
@@ -12,7 +11,7 @@ const DEFAULT_PAGE_SIZE = 30;
 router.get("/", async (req: express.Request, res: express.Response) => {
   const { search: pSearch, afterCursor } = req.query;
 
-  const searchQuery = pSearch ? slugify(pSearch.toString()) : undefined;
+  const searchQuery = pSearch ? pSearch.toString() : undefined;
   const searchFilter = Object.assign(
     { archived: false },
     searchQuery ? { description: new RegExp(searchQuery, "i") } : {}
