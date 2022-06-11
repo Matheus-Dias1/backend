@@ -4,16 +4,13 @@ import { AccessibleRecordModel, accessibleRecordsPlugin } from "@casl/mongoose";
 const productSchema = new Schema({
   description: String,
   defaultMeasurementUnit: String,
-  conversions: [
-    {
-      measurementUnit: String,
-      oneDefaultEquals: Number,
-    },
-  ],
+  conversions: [mongoose.Schema.Types.Mixed],
+  archived: Boolean,
 });
 
 export interface ProductT extends Document {
   description: "Product";
+  archived: boolean;
   name: string;
   defaultMeasurementUnit: string;
   conversions: {
