@@ -1,5 +1,6 @@
 import express = require("express");
 import mongoose from "mongoose";
+import { Batch } from "../models/batch";
 import { Order } from "../models/order";
 import { decodeCursor, encodeCursor, PageInfo } from "../utils/pagination";
 
@@ -36,7 +37,8 @@ router.get("/", async (req: express.Request, res: express.Response) => {
         model: "Product",
         select: "-_id",
       },
-    });
+    })
+    .sort({ _id: -1 });
 
   const hasNextPage = items.length > DEFAULT_PAGE_SIZE;
   if (hasNextPage) items = items.slice(0, DEFAULT_PAGE_SIZE);
@@ -72,14 +74,15 @@ router.post("/", async (req: express.Request, res: express.Response) => {
     client,
     deliverAt,
     items,
-    batch: batch,
+    batch,
     createdAt: new Date(),
     archived: false,
   });
 
-  newOrder.save((err, order) => {
-    if (err) res.sendStatus(500);
-    else res.status(201).send({ id: order.id });
+  newOrder.save(async (err, order) => {
+    if (err) return res.sendStatus(500);
+    await Batch.findByIdAndUpdate(batch, { $push: { orders: order.id } });
+    res.status(201).send({ id: order.id });
   });
 });
 
