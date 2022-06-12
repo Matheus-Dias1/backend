@@ -1,9 +1,11 @@
-import express = require("express");
+import express from "express";
 import mongoose from "mongoose";
+import { authenticateToken } from "../middleware/authorization";
 import { Product } from "../models/product";
 import { decodeCursor, encodeCursor, PageInfo } from "../utils/pagination";
 
 const router = express.Router();
+router.use(authenticateToken);
 
 const DEFAULT_PAGE_SIZE = 30;
 
