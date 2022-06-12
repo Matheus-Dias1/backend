@@ -1,20 +1,20 @@
 import express = require("express");
 import mongoose from "mongoose";
-import { Product } from "../models/product";
+import { Order } from "../models/order";
 import { decodeCursor, encodeCursor, PageInfo } from "../utils/pagination";
 
 const router = express.Router();
 
 const DEFAULT_PAGE_SIZE = 30;
 
-/** Indexes products */
+/** Indexes orders */
 router.get("/", async (req: express.Request, res: express.Response) => {
   const { search: pSearch, afterCursor } = req.query;
 
-  const searchQuery = pSearch ? pSearch.toString() : undefined;
+  const searchQuery = pSearch ? parseInt(pSearch.toString(), 10) : undefined;
   const searchFilter = Object.assign(
     { archived: false },
-    searchQuery ? { description: new RegExp(searchQuery, "i") } : {}
+    searchQuery ? { batch: searchQuery } : {}
   );
 
   const cursorFilters: any = afterCursor
@@ -25,9 +25,18 @@ router.get("/", async (req: express.Request, res: express.Response) => {
       }
     : {};
 
-  let items = await Product.find({
+  let items = await Order.find({
     $and: [cursorFilters, searchFilter],
-  }).limit(DEFAULT_PAGE_SIZE + 1);
+  })
+    .limit(DEFAULT_PAGE_SIZE + 1)
+    .populate({
+      path: "items",
+      populate: {
+        path: "item",
+        model: "Product",
+        select: "-_id",
+      },
+    });
 
   const hasNextPage = items.length > DEFAULT_PAGE_SIZE;
   if (hasNextPage) items = items.slice(0, DEFAULT_PAGE_SIZE);
@@ -46,56 +55,61 @@ router.get("/", async (req: express.Request, res: express.Response) => {
   res.send({
     pageInfo,
     edges,
-    totalCount: await Product.countDocuments(searchFilter),
+    totalCount: await Order.countDocuments(searchFilter),
   });
 });
 
-/** Add new product */
+/** Add new Order */
 router.post("/", async (req: express.Request, res: express.Response) => {
-  const { description, deafultMeasurementUnit, conversions } = req.body;
+  const { client, batch, deliverAt, items } = req.body;
 
-  if (!description || !deafultMeasurementUnit || !conversions)
-    return res.sendStatus(400);
+  if (!client || !batch || !deliverAt || !items) return res.sendStatus(400);
+  items.forEach((item: any) => {
+    item.item = new mongoose.Types.ObjectId(item.item);
+  });
 
-  const newProduct = new Product({
-    description,
-    deafultMeasurementUnit,
-    conversions,
+  const newOrder = new Order({
+    client,
+    deliverAt,
+    items,
+    batch: batch,
+    createdAt: new Date(),
     archived: false,
   });
 
-  newProduct.save((err, prod) => {
+  newOrder.save((err, order) => {
     if (err) res.sendStatus(500);
-    else res.status(201).send({ id: prod.id });
+    else res.status(201).send({ id: order.id });
   });
 });
 
-/** Updated a product */
+/** Updated a Order */
 router.put("/:id", async (req: express.Request, res: express.Response) => {
   const id = req.params.id;
-  const { description, deafultMeasurementUnit, conversions } = req.body;
+  const { client, batch, deliverAt, items } = req.body;
 
   const update = {
     $set: Object.assign(
       {},
-      description ? { description } : null,
-      deafultMeasurementUnit ? { deafultMeasurementUnit } : null,
-      conversions ? { conversions } : null
+      client ? { client } : null,
+      batch ? { batch } : null,
+      deliverAt ? { deliverAt } : null,
+      items ? { items } : null
     ),
   };
   if (Object.keys(update.$set).length > 0) {
-    await Product.updateOne({ _id: new mongoose.Types.ObjectId(id) }, update);
+    await Order.updateOne({ _id: new mongoose.Types.ObjectId(id) }, update);
     return res.sendStatus(200);
   }
 
   res.sendStatus(400);
 });
 
-/** Archives a product */
+/** Archives a Order */
 router.delete("/:id", async (req: express.Request, res: express.Response) => {
   const id = req.params.id;
 
-  await Product.updateOne(
+  await Order.updateOne(
     { _id: new mongoose.Types.ObjectId(id) },
     { $set: { archived: true } }
   );
