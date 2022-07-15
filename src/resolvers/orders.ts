@@ -117,7 +117,6 @@ router.put("/:id", async (req: express.Request, res: express.Response) => {
   const id = req.params.id;
   const { client, batch, deliverAt, items } = req.body;
 
-  console.log(items);
   const update = {
     $set: Object.assign(
       {},
