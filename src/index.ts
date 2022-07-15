@@ -14,6 +14,6 @@ app.use(cors());
 app.use(express.json());
 app.use(router);
 
-app.listen(port, () => {
+app.listen(process.env.PORT || 5000, () => {
   console.log(`Listening on port ${port}`);
 });
