@@ -10,17 +10,20 @@ const DEFAULT_PAGE_SIZE = 30;
 
 /** Indexes batches */
 router.get("/", async (req: express.Request, res: express.Response) => {
-  const { afterCursor } = req.query;
+  const { afterCursor, search } = req.query;
 
   const cursorFilters: any = afterCursor
     ? {
         _id: {
-          $gt: decodeCursor(afterCursor),
+          $lt: decodeCursor(afterCursor),
         },
       }
     : {};
 
-  let items = await Batch.find(cursorFilters)
+  const filters = cursorFilters;
+  if (search) Object.assign(filters, { number: search });
+
+  let items = await Batch.find(filters)
     .limit(DEFAULT_PAGE_SIZE + 1)
     .sort({ _id: -1 })
     .select(["number", "startDate", "endDate"]);
@@ -68,16 +71,20 @@ router.post("/", async (req: express.Request, res: express.Response) => {
 
 /** Get orders of batches */
 router.get("/summary", async (req: express.Request, res: express.Response) => {
-  const { afterCursor } = req.query;
+  const { afterCursor, search: searchP } = req.query;
   const cursorFilters: any = afterCursor
     ? {
         _id: {
-          $gt: decodeCursor(afterCursor),
+          $lt: decodeCursor(afterCursor),
         },
       }
     : {};
 
-  let items = await Batch.find(cursorFilters)
+  const filters = cursorFilters;
+  const search = parseInt(searchP ? searchP.toString() : "");
+  if (searchP && !isNaN(search)) Object.assign(filters, { number: search });
+
+  let items = await Batch.find(filters)
     .limit(DEFAULT_PAGE_SIZE + 1)
     .sort({ _id: -1 })
     .populate({
@@ -89,7 +96,6 @@ router.get("/summary", async (req: express.Request, res: express.Response) => {
         populate: {
           path: "item",
           model: "Product",
-          select: "-_id",
         },
       },
     });
@@ -100,6 +106,7 @@ router.get("/summary", async (req: express.Request, res: express.Response) => {
     cursor: encodeCursor(r.id.toString()),
     node: r,
   }));
+
   const pageInfo: PageInfo = {
     endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : null,
     hasNextPage,
@@ -111,5 +118,26 @@ router.get("/summary", async (req: express.Request, res: express.Response) => {
     totalCount: await Batch.countDocuments(),
   });
 });
+
+/** Get orders for a batch */
+router.get(
+  "/summary/:id",
+  async (req: express.Request, res: express.Response) => {
+    const id = req.params.id;
+    let summary = await Batch.findById(id).populate({
+      path: "orders",
+      model: "Order",
+      select: "-batch",
+      populate: {
+        path: "items",
+        populate: {
+          path: "item",
+          model: "Product",
+        },
+      },
+    });
+    res.send(summary);
+  }
+);
 
 export default router;

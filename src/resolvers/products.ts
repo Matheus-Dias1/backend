@@ -16,7 +16,7 @@ router.get("/", async (req: express.Request, res: express.Response) => {
   const searchQuery = pSearch ? pSearch.toString() : undefined;
   const searchFilter = Object.assign(
     { archived: false },
-    searchQuery ? { description: new RegExp(searchQuery, "i") } : {}
+    searchQuery && { description: new RegExp(searchQuery, "i") }
   );
 
   const cursorFilters: any = afterCursor
@@ -54,14 +54,14 @@ router.get("/", async (req: express.Request, res: express.Response) => {
 
 /** Add new product */
 router.post("/", async (req: express.Request, res: express.Response) => {
-  const { description, deafultMeasurementUnit, conversions } = req.body;
+  const { description, defaultMeasurementUnit, conversions } = req.body;
 
-  if (!description || !deafultMeasurementUnit || !conversions)
+  if (!description || !defaultMeasurementUnit || !conversions)
     return res.sendStatus(400);
 
   const newProduct = new Product({
     description,
-    deafultMeasurementUnit,
+    defaultMeasurementUnit,
     conversions,
     archived: false,
   });
@@ -75,13 +75,13 @@ router.post("/", async (req: express.Request, res: express.Response) => {
 /** Updated a product */
 router.put("/:id", async (req: express.Request, res: express.Response) => {
   const id = req.params.id;
-  const { description, deafultMeasurementUnit, conversions } = req.body;
+  const { description, defaultMeasurementUnit, conversions } = req.body;
 
   const update = {
     $set: Object.assign(
       {},
       description ? { description } : null,
-      deafultMeasurementUnit ? { deafultMeasurementUnit } : null,
+      defaultMeasurementUnit ? { defaultMeasurementUnit } : null,
       conversions ? { conversions } : null
     ),
   };
@@ -91,6 +91,13 @@ router.put("/:id", async (req: express.Request, res: express.Response) => {
   }
 
   res.sendStatus(400);
+});
+
+/** Gets a product */
+router.get("/:id", async (req: express.Request, res: express.Response) => {
+  const id = req.params.id;
+  const product = await Product.findById(id);
+  res.send(product);
 });
 
 /** Archives a product */

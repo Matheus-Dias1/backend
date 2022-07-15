@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { AccessibleRecordModel, accessibleRecordsPlugin } from "@casl/mongoose";
 
-const productSchema = new Schema({
+export const productSchema = new Schema({
   description: String,
   defaultMeasurementUnit: String,
   conversions: [mongoose.Schema.Types.Mixed],

@@ -23,7 +23,7 @@ router.get("/", async (req: express.Request, res: express.Response) => {
   const cursorFilters: any = afterCursor
     ? {
         _id: {
-          $gt: decodeCursor(afterCursor),
+          $lt: decodeCursor(afterCursor),
         },
       }
     : {};
@@ -39,6 +39,11 @@ router.get("/", async (req: express.Request, res: express.Response) => {
         model: "Product",
         select: "-_id",
       },
+    })
+    .populate({
+      path: "batch",
+      model: "Batch",
+      select: "_id number",
     })
     .sort({ _id: -1 });
 
@@ -88,11 +93,31 @@ router.post("/", async (req: express.Request, res: express.Response) => {
   });
 });
 
+/** Gets a Order */
+router.get("/:id", async (req: express.Request, res: express.Response) => {
+  const id = req.params.id;
+  const order = await Order.findById(id)
+    .populate({
+      path: "items",
+      populate: {
+        path: "item",
+        model: "Product",
+      },
+    })
+    .populate({
+      path: "batch",
+      model: "Batch",
+      select: "_id number",
+    });
+  res.send(order);
+});
+
 /** Updated a Order */
 router.put("/:id", async (req: express.Request, res: express.Response) => {
   const id = req.params.id;
   const { client, batch, deliverAt, items } = req.body;
 
+  console.log(items);
   const update = {
     $set: Object.assign(
       {},

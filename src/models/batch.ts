@@ -5,7 +5,7 @@ const batchSchema = new Schema({
   number: Number,
   startDate: Date,
   endDate: Date,
-  orders: [mongoose.Types.ObjectId],
+  orders: [{ type: Schema.Types.ObjectId, ref: "Order" }],
 });
 
 export interface BatchT extends Document {

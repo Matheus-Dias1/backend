@@ -1,12 +1,21 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { AccessibleRecordModel, accessibleRecordsPlugin } from "@casl/mongoose";
 
-const orderSchema = new Schema({
+export const orderSchema = new Schema({
   client: String,
-  batch: mongoose.Schema.Types.ObjectId,
+  batch: Schema.Types.ObjectId,
   createdAt: Date,
   deliverAt: Date,
-  items: [mongoose.Schema.Types.Mixed],
+  items: [
+    new Schema(
+      {
+        item: { type: Schema.Types.ObjectId, ref: "Product" },
+        amount: Number,
+        measurementUnit: String,
+      },
+      { id: false }
+    ),
+  ],
   archived: Boolean,
 });
 
