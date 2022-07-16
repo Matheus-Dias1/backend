@@ -107,7 +107,6 @@ router.get("/:id", async (req: express.Request, res: express.Response) => {
     .populate({
       path: "batch",
       model: "Batch",
-      select: "_id number",
     });
   res.send(order);
 });
