@@ -77,8 +77,8 @@ router.post("/general", async (req: express.Request, res: express.Response) => {
   }
 });
 
-/** Generates clients sheet */
-router.post("/clients", async (req: express.Request, res: express.Response) => {
+/** Generates orders sheet */
+router.post("/orders", async (req: express.Request, res: express.Response) => {
   try {
     const data: {
       client: string;
