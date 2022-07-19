@@ -14,7 +14,6 @@ router.use("/orders", orders);
 router.use("/batches", batches);
 router.use("/session", session);
 router.use("/users", users);
-router.use("/users", users);
 router.use("/download", download);
 
 export default router;
