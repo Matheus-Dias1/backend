@@ -82,6 +82,7 @@ router.post("/orders", async (req: express.Request, res: express.Response) => {
   try {
     const data: {
       client: string;
+      deliverAt: string;
       items: {
         id: string;
         name: string;
@@ -102,9 +103,9 @@ router.post("/orders", async (req: express.Request, res: express.Response) => {
       { name: "Quantidade", width: 20 },
       { name: "Unidade", width: 15 },
     ];
-
     data.forEach((client) => {
-      const nameRow = sheet.addRow([client.client]);
+      const date = client.deliverAt ? new Date(client.deliverAt).toLocaleDateString('pt-BR') : '';
+      const nameRow = sheet.addRow([`${client.client} - ${date}`]);
       nameRow.font = {
         size: 14,
         bold: true,
@@ -119,21 +120,37 @@ router.post("/orders", async (req: express.Request, res: express.Response) => {
       sheet.addTable({
         name: client.client,
         ref: `A${currRow + 1}`,
-        style: {
-          theme: "TableStyleLight8",
-          showRowStripes: true,
-        },
         columns,
         rows,
       });
 
       const headerRow = sheet.rowCount - rows.length;
+      const header = sheet.getRow(headerRow)
 
-      sheet.getRow(headerRow).font = {
-        color: { argb: "#ffffff" },
+      header.font = {
         size: 12,
         bold: true,
+        color: {argb: 'ffffff'}
       };
+
+      for (let i = headerRow; i <= headerRow - 1 + rows.length; i+=1) {
+        [`A${i}`, `B${i}`, `C${i}`].forEach(cell => {
+          const sCell = sheet.getCell(cell);
+          if (i === headerRow) {
+            sCell.fill = {
+              type: 'pattern',
+              pattern:'solid',
+              fgColor:{argb: '3d85c6' }
+          }
+          } else {
+            sCell.fill = {
+                type: 'pattern',
+                pattern:'solid',
+                fgColor:{argb: i % 2 ? 'dbe5f1' : 'b8cce4' }
+            }
+          }
+        })
+      }
     });
 
     sheet.getColumn(1).width = 40;
