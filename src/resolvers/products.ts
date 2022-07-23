@@ -7,7 +7,7 @@ import { decodeCursor, encodeCursor, PageInfo } from "../utils/pagination";
 const router = express.Router();
 router.use(authenticateToken);
 
-const DEFAULT_PAGE_SIZE = 30;
+const DEFAULT_PAGE_SIZE = 29;
 
 /** Indexes products */
 router.get("/", async (req: express.Request, res: express.Response) => {
